@@ -2,7 +2,7 @@
 const API_CONFIG = {
     APP_ID: 'cli_a85633f4cbf9d028',
     APP_SECRET: 'DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW',
-    BASE_URL: 'https://open.larksuite.com/open-apis/bitable/v1',
+    BASE_URL: 'https://hsglgzblfc5f.sg.larksuite.com/open-apis/bitable/v1',
     APP_TOKEN: 'V1VKbIAasakzuAsD4x0lObgKgQc',
     TABLE_ID: 'tblMhTzRqOPlesg3',
     // Actual field names will be determined at runtime
@@ -12,7 +12,7 @@ const API_CONFIG = {
 
 // House configurations
 const HOUSES = {
-    'GryffinHR': {
+    'GriffinHour': {
         class: 'gryffin-hr',
         emoji: '🦁'
     },
