@@ -73,17 +73,26 @@ async function getTenantAccessToken() {
 async function fetchResult(email) {
     const errorElement = document.getElementById('error');
     try {
-        errorElement.innerHTML = '<p>Getting access token...</p>';
+        // Show debug info
+        errorElement.innerHTML = '<p style="color: #666; font-size: 0.9em;">DEBUG INFO:</p>';
         errorElement.classList.remove('hidden');
         
+        const appendLog = (message) => {
+            errorElement.innerHTML += `<p style="color: #666; font-size: 0.9em;">${message}</p>`;
+        };
+
+        appendLog('Getting access token...');
         const tenantAccessToken = await getTenantAccessToken();
         if (!tenantAccessToken) {
             throw new Error('Failed to get access token');
         }
+        appendLog('✓ Access token received');
         
         // Construct the URL with query parameters
         const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view=${API_CONFIG.VIEW_ID}&filter=CurrentValue.[${API_CONFIG.EMAIL_FIELD}]="${email}"`;
-        errorElement.innerHTML = '<p>Fetching your results...</p>';
+        appendLog(`Looking up email: ${email}`);
+        appendLog(`Table ID: ${API_CONFIG.TABLE_ID}`);
+        appendLog(`Looking for field: ${API_CONFIG.HOUSE_FIELD}`);
         
         const response = await fetch(url, {
             method: 'GET',
@@ -94,29 +103,32 @@ async function fetchResult(email) {
         });
 
         const responseText = await response.text();
+        appendLog(`Response status: ${response.status}`);
         
         if (!response.ok) {
             throw new Error(`API request failed (${response.status}): ${responseText}`);
         }
 
         const data = JSON.parse(responseText);
+        appendLog(`Records found: ${data.data?.total || 0}`);
         
         // Check if we have any records
         if (data.data && data.data.total > 0 && data.data.items.length > 0) {
             const fields = data.data.items[0].fields;
-            errorElement.innerHTML = '<p>Fields found: ' + Object.keys(fields).join(', ') + '</p>';
+            appendLog('Available fields in response: ' + Object.keys(fields).join(', '));
             
             const result = fields[API_CONFIG.HOUSE_FIELD];
             if (!result) {
                 throw new Error(`No '${API_CONFIG.HOUSE_FIELD}' field found in response. Available fields: ${Object.keys(fields).join(', ')}`);
             }
+            appendLog(`✓ Found result: ${result}`);
             errorElement.classList.add('hidden');
             return result;
         }
-        errorElement.innerHTML = '<p>No records found for email: ' + email + '</p>';
+        appendLog(`❌ No records found for email: ${email}`);
         return null;
     } catch (error) {
-        errorElement.innerHTML = '<p>Error: ' + error.message + '</p>';
+        appendLog(`❌ Error: ${error.message}`);
         return null;
     }
 }
