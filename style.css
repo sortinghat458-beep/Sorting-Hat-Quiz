@@ -19,7 +19,7 @@
 body {
     font-family: 'Arial', sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #2c3e50, #3498db);
+    background: linear-gradient(135deg, #1a0f2e, #432c67, #7b4397);
     display: flex;
     justify-content: center;
     align-items: center;
