@@ -73,9 +73,11 @@ async function getTenantAccessToken() {
 async function fetchResult(email) {
     try {
         const tenantAccessToken = await getTenantAccessToken();
+        console.log('Got tenant access token:', tenantAccessToken ? 'Yes' : 'No');
         
         // Construct the URL with query parameters
         const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view=${API_CONFIG.VIEW_ID}&filter=CurrentValue.[${API_CONFIG.EMAIL_FIELD}]="${email}"`;
+        console.log('Request URL:', url);
         
         const response = await fetch(url, {
             method: 'GET',
@@ -85,17 +87,26 @@ async function fetchResult(email) {
             }
         });
 
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Response body:', responseText);
+
         if (!response.ok) {
-            throw new Error('API request failed');
+            throw new Error(`API request failed with status ${response.status}: ${responseText}`);
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseText);
+        console.log('Parsed data:', data);
         
         // Check if we have any records
-        if (data.data.total > 0 && data.data.items.length > 0) {
-            // Return the house field from the first matching record
-            return data.data.items[0].fields[API_CONFIG.HOUSE_FIELD];
+        if (data.data && data.data.total > 0 && data.data.items.length > 0) {
+            console.log('Found record:', data.data.items[0]);
+            console.log('Available fields:', Object.keys(data.data.items[0].fields));
+            const result = data.data.items[0].fields[API_CONFIG.HOUSE_FIELD];
+            console.log('Result value:', result);
+            return result;
         }
+        console.log('No matching records found for email:', email);
         return null;
     } catch (error) {
         console.error('Error fetching result:', error);
