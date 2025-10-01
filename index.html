@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Hat Quiz: Which HR House Do You Belong To?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="result-card">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>The Sorting Hat is thinking...</p>
+            </div>
+            <div id="result" class="result hidden">
+                <h1>Sorting Hat Results</h1>
+                <p id="house-result" class="house-announcement"></p>
+                <button id="share-button" class="share-button">Share Result</button>
+            </div>
+            <div id="error" class="error hidden">
+                <p>Oops! We couldn't find your result.</p>
+                <p class="small">Please make sure you've completed the quiz.</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
