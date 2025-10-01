@@ -30,7 +30,7 @@ const HOUSES = {
     }
 };
 
-// DOM Elements
+// DOM Elementssss
 const loadingElement = document.getElementById('loading');
 const resultElement = document.getElementById('result');
 const errorElement = document.getElementById('error');
