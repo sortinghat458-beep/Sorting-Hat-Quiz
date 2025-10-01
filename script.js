@@ -7,7 +7,7 @@ const API_CONFIG = {
     TABLE_ID: 'tblMhTzRqOPlesg3',
     VIEW_ID: 'vewuuxuOFc',
     EMAIL_FIELD: 'email',
-    HOUSE_FIELD: 'house'
+    HOUSE_FIELD: 'Result'
 };
 
 // House configurations
