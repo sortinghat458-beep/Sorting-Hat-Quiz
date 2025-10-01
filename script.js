@@ -5,9 +5,9 @@ const API_CONFIG = {
     BASE_URL: 'https://hsglgzblfc5f.sg.larksuite.com/open-apis/bitable/v1',
     APP_TOKEN: 'V1VKbIAasakzuAsD4x0lObgKgQc',
     TABLE_ID: 'tblMhTzRqOPlesg3',
-    // Actual field names will be determined at runtime
-    EMAIL_FIELD_LOWERCASE: 'email',
-    RESULT_FIELD_LOWERCASE: 'result'
+    VIEW_ID: 'vewuuxuOFc',
+    EMAIL_FIELD: 'Email',  // Using exact field name from Lark Base
+    RESULT_FIELD: 'Result'  // Using exact field name from Lark Base
 };
 
 // House configurations
@@ -73,7 +73,6 @@ async function getTenantAccessToken() {
 async function fetchResult(email) {
     const errorElement = document.getElementById('error');
     try {
-        // Show debug info
         errorElement.innerHTML = '<p style="color: #666; font-size: 0.9em;">DEBUG INFO:</p>';
         errorElement.classList.remove('hidden');
         
@@ -88,51 +87,10 @@ async function fetchResult(email) {
         }
         appendLog('✓ Access token received');
         
-        // First, get all records to discover field names
-        const baseUrl = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records`;
-        appendLog('Fetching table structure...');
-        
-        const initialResponse = await fetch(baseUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${tenantAccessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!initialResponse.ok) {
-            const errorText = await initialResponse.text();
-            appendLog(`API Error (${initialResponse.status}): ${errorText}`);
-            if (initialResponse.status === 403) {
-                appendLog('⚠️ Permission denied. Check if app has bitable:app and bitable:table:read permissions');
-            }
-            throw new Error(`API request failed (${initialResponse.status})`);
-        }
-
-        const initialData = await initialResponse.json();
-        
-        if (!initialData.data?.items?.[0]) {
-            appendLog('⚠️ Table appears to be empty');
-            return null;
-        }
-
-        // Find exact field names (case-sensitive)
-        const fields = initialData.data.items[0].fields;
-        const fieldNames = Object.keys(fields);
-        appendLog('Available fields: ' + fieldNames.join(', '));
-
-        // Find exact email field name
-        const emailField = fieldNames.find(f => 
-            f.toLowerCase() === API_CONFIG.EMAIL_FIELD_LOWERCASE
-        );
-        if (!emailField) {
-            throw new Error(`Email field not found. Looking for field containing '${API_CONFIG.EMAIL_FIELD_LOWERCASE}'. Available fields: ${fieldNames.join(', ')}`);
-        }
-        appendLog(`✓ Found email field: "${emailField}"`);
-
-        // Now fetch with correct field name and filter
-        const url = `${baseUrl}?filter=CurrentValue.[${emailField}]="${email}"`;
-        appendLog(`Looking up email: ${email}`);
+        // Construct URL with exact field names
+        const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view=${API_CONFIG.VIEW_ID}&filter=CurrentValue.[${API_CONFIG.EMAIL_FIELD}]="${email}"`;
+        appendLog(`Fetching results for email: ${email}`);
+        appendLog(`Using URL: ${url}`);
         
         const response = await fetch(url, {
             method: 'GET',
@@ -142,32 +100,33 @@ async function fetchResult(email) {
             }
         });
 
+        const responseText = await response.text();
+        appendLog(`Response status: ${response.status}`);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Filtered query failed (${response.status}): ${errorText}`);
+            throw new Error(`API request failed (${response.status}): ${responseText}`);
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseText);
         appendLog(`Records found: ${data.data?.total || 0}`);
         
+        // Check if we have any records
         if (data.data?.items?.[0]) {
-            const record = data.data.items[0];
-            const fields = record.fields;
+            const fields = data.data.items[0].fields;
+            appendLog('Available fields: ' + Object.keys(fields).join(', '));
             
-            // Find exact result field name
-            const resultField = Object.keys(fields).find(f => 
-                f.toLowerCase() === API_CONFIG.RESULT_FIELD_LOWERCASE
-            );
-            
-            if (!resultField) {
-                throw new Error(`Result field not found. Looking for field containing '${API_CONFIG.RESULT_FIELD_LOWERCASE}'. Available fields: ${Object.keys(fields).join(', ')}`);
+            // Get result from the Result field
+            const result = fields[API_CONFIG.RESULT_FIELD];
+            if (!result) {
+                throw new Error(`No '${API_CONFIG.RESULT_FIELD}' field found in response. Available fields: ${Object.keys(fields).join(', ')}`);
             }
-            
-            const result = fields[resultField];
-            appendLog(`✓ Found result in field "${resultField}": ${result}`);
+            appendLog(`✓ Found result: ${result}`);
             errorElement.classList.add('hidden');
             return result;
         }
+        
+        appendLog(`❌ No records found for email: ${email}`);
+        return null;
         
         appendLog(`❌ No records found for email: ${email}`);
         return null;
