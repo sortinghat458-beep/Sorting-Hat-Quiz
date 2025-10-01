@@ -4,7 +4,7 @@ const API_CONFIG = {
     APP_SECRET: 'DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW',
     BASE_URL: 'https://open.larksuite.com/open-apis/bitable/v1',
     APP_TOKEN: 'V1VKbIAasakzuAsD4x0lObgKgQc',
-    TABLE_ID: 'tblYDVJqn2pEUlFk',
+    TABLE_ID: 'tblMhTzRqOPlesg3',
     VIEW_ID: 'vewuuxuOFc',
     EMAIL_FIELD: 'email',
     HOUSE_FIELD: 'house'
