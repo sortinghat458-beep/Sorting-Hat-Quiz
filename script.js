@@ -71,13 +71,19 @@ async function getTenantAccessToken() {
 
 // Fetch result from Lark Base API
 async function fetchResult(email) {
+    const errorElement = document.getElementById('error');
     try {
+        errorElement.innerHTML = '<p>Getting access token...</p>';
+        errorElement.classList.remove('hidden');
+        
         const tenantAccessToken = await getTenantAccessToken();
-        console.log('Got tenant access token:', tenantAccessToken ? 'Yes' : 'No');
+        if (!tenantAccessToken) {
+            throw new Error('Failed to get access token');
+        }
         
         // Construct the URL with query parameters
         const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view=${API_CONFIG.VIEW_ID}&filter=CurrentValue.[${API_CONFIG.EMAIL_FIELD}]="${email}"`;
-        console.log('Request URL:', url);
+        errorElement.innerHTML = '<p>Fetching your results...</p>';
         
         const response = await fetch(url, {
             method: 'GET',
@@ -87,29 +93,30 @@ async function fetchResult(email) {
             }
         });
 
-        console.log('Response status:', response.status);
         const responseText = await response.text();
-        console.log('Response body:', responseText);
-
+        
         if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}: ${responseText}`);
+            throw new Error(`API request failed (${response.status}): ${responseText}`);
         }
 
         const data = JSON.parse(responseText);
-        console.log('Parsed data:', data);
         
         // Check if we have any records
         if (data.data && data.data.total > 0 && data.data.items.length > 0) {
-            console.log('Found record:', data.data.items[0]);
-            console.log('Available fields:', Object.keys(data.data.items[0].fields));
-            const result = data.data.items[0].fields[API_CONFIG.HOUSE_FIELD];
-            console.log('Result value:', result);
+            const fields = data.data.items[0].fields;
+            errorElement.innerHTML = '<p>Fields found: ' + Object.keys(fields).join(', ') + '</p>';
+            
+            const result = fields[API_CONFIG.HOUSE_FIELD];
+            if (!result) {
+                throw new Error(`No '${API_CONFIG.HOUSE_FIELD}' field found in response. Available fields: ${Object.keys(fields).join(', ')}`);
+            }
+            errorElement.classList.add('hidden');
             return result;
         }
-        console.log('No matching records found for email:', email);
+        errorElement.innerHTML = '<p>No records found for email: ' + email + '</p>';
         return null;
     } catch (error) {
-        console.error('Error fetching result:', error);
+        errorElement.innerHTML = '<p>Error: ' + error.message + '</p>';
         return null;
     }
 }
