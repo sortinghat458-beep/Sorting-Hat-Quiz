@@ -1,6 +1,11 @@
 // API Configuration
 const API_CONFIG = {
     BASE_URL: 'http://localhost:3000',
+    APP_ID: 'cli_a85633f4cbf9d028',
+    APP_SECRET: 'DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW',
+    APP_TOKEN: 'V1VKbIAasakzuAsD4x0lObgKgQc',
+    TABLE_ID: 'tblMhTzRqOPlesg3',
+    VIEW_ID: 'vewuuxuOFc',
     EMAIL_FIELD: 'Email',
     RESULT_FIELD: 'Result'
 };
@@ -60,16 +65,20 @@ async function fetchResult(email) {
         appendLog(`Using URL: ${url}`);
         
         const response = await fetch(url);
-        const responseText = await response.text();
-        appendLog(`Response status: ${response.status}`);
-
+        
         if (!response.ok) {
-            throw new Error(`API request failed (${response.status}): ${responseText}`);
+            if (response.status === 404) {
+                appendLog(`❌ No results found for email: ${email}`);
+                return null;
+            }
+            throw new Error(`API request failed (${response.status})`);
         }
 
-        const data = JSON.parse(responseText);
+        const data = await response.json();
+        appendLog(`Response status: ${response.status}`);
+        
         if (data.result) {
-            appendLog(`✓ Found result: ${data.result}`);
+            appendLog(`✓ Found result for ${email}: ${data.result}`);
             errorElement.classList.add('hidden');
             return data.result;
         }
@@ -135,15 +144,34 @@ async function init() {
     errorElement.classList.remove('hidden');
 
     try {
+        loadingElement.classList.remove('hidden');
         const house = await fetchResult(email);
+        
         if (house) {
             showResult(house);
             setupShareButton(house);
+            errorElement.classList.add('hidden');
         } else {
-            errorElement.textContent = `No results found for ${email}`;
+            loadingElement.classList.add('hidden');
+            errorElement.classList.remove('hidden');
+            errorElement.innerHTML = `
+                <p>No results found for ${email}</p>
+                <p class="error-details">Please check that:</p>
+                <ul>
+                    <li>The email address is spelled correctly</li>
+                    <li>You have completed the sorting quiz</li>
+                    <li>The results have been processed (this may take a few minutes)</li>
+                </ul>
+            `;
         }
     } catch (error) {
-        errorElement.textContent = `Error: Unable to retrieve data`;
+        loadingElement.classList.add('hidden');
+        errorElement.classList.remove('hidden');
+        errorElement.innerHTML = `
+            <p>Error: Unable to retrieve data</p>
+            <p class="error-details">Please try again in a few moments. If the problem persists, contact support.</p>
+            <p class="error-technical">${error.message}</p>
+        `;
         console.error('Error:', error);
     }
 }

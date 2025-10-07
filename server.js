@@ -8,20 +8,34 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors()); // Enable CORS for all routes
+
+// Configure CORS with specific options
+app.use(cors({
+  origin: '*', // In production, you should configure this to your specific domain
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Set JSON content type for all API responses
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 app.use(express.static(__dirname)); // Serve static files from current directory
 const PORT = 3000;
 
 // Your Lark API info
 const API_CONFIG = {
-  APP_ID: "cli_a85633f4cbf9d028",      // App ID from Lark
-  APP_SECRET: "DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW",  // App Secret from Lark
-  APP_TOKEN: "V1VKbIAasakzuAsD4x0lObgKgQc",    // Base/App Token
-  TABLE_ID: "tblMhTzRqOPlesg3",        // Table ID from Lark Base
-  VIEW_ID: "vewuuxuOFc",               // View ID from Lark Base
-  EMAIL_FIELD: "Email",                 // Exact column name for email
-  RESULT_FIELD: "Result",               // Exact column name for result
-  BASE_URL: "https://hsglgzblfc5f.sg.larksuite.com/open-apis/bitable/v1"  // Updated Base URL
+  APP_ID: "cli_a85633f4cbf9d028",
+  APP_SECRET: "DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW",
+  APP_TOKEN: "V1VKbIAasakzuAsD4x0lObgKgQc",
+  TABLE_ID: "tblMhTzRqOPlesg3",
+  VIEW_ID: "vewuuxuOFc",
+  EMAIL_FIELD: "Email",                // Matches exactly with your Lark Base column name
+  RESULT_FIELD: "Result",              // Matches exactly with your Lark Base column name
+  BASE_URL: "https://open.larksuite.com/open-apis/bitable/v1"
 };
 
 // Get access token
@@ -54,21 +68,42 @@ async function getTenantAccessToken() {
   }
 }
 
-// Debug endpoint to see all records
-app.get("/api/debug", async (req, res) => {
+// Debug endpoint to list all records
+app.get("/api/list-records", async (req, res) => {
   try {
+    console.log('Getting tenant access token...');
     const token = await getTenantAccessToken();
-    const url = `https://open.larksuite.com/open-apis/bitable/v1/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view_id=${API_CONFIG.VIEW_ID}`;
+    console.log('Token obtained successfully');
+
+    const url = `https://open.larksuite.com/open-apis/bitable/v1/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records`;
+    console.log('Requesting data from URL:', url);
+
     const response = await fetch(url, {
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
     const data = await response.json();
-    res.json(data);
+    console.log('Records found:', data.data?.items?.length || 0);
+    
+    // Send the response with formatted JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(data, null, 2));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error:', err);
+    res.status(500).json({ 
+      error: err.message,
+      stack: err.stack,
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -108,18 +143,11 @@ app.get("/api/result", async (req, res) => {
   if (!email) return res.status(400).json({ error: "Email is required" });
 
   try {
-    console.log(`\n[${new Date().toISOString()}] Getting result for email: ${email}`);
     const token = await getTenantAccessToken();
-    console.log('✓ Access token obtained successfully');
-
-    const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records`;
-    const params = new URLSearchParams({
-      view_id: API_CONFIG.VIEW_ID,
-      filter: `CurrentValue.[${API_CONFIG.EMAIL_FIELD}] = "${email}"`
-    });
-    const fullUrl = `${url}?${params}`;
-    console.log(`✓ Requesting data from Lark Base...`);
-    console.log('URL:', fullUrl);
+    const url = `https://open.larksuite.com/open-apis/bitable/v1/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records`;
+    
+    console.log('Fetching data for email:', email);
+    console.log('URL:', url);
 
     const response = await fetch(url, {
       headers: { 
@@ -129,25 +157,28 @@ app.get("/api/result", async (req, res) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ API Error Response:', errorText);
       throw new Error(`API request failed with status ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('✓ Received response from Lark Base');
-    console.log('Debug - Available fields in first record:', data.data?.items?.[0]?.fields ? Object.keys(data.data.items[0].fields) : 'No records found');
-    
+    console.log('Raw response data:', JSON.stringify(data, null, 2));
+
     if (!data.data || !data.data.items) {
-      console.error('❌ Invalid API response format');
       throw new Error('Invalid response format from Lark API');
     }
 
-    console.log(`✓ Found ${data.data.items.length} records in table`);
+    console.log(`Found ${data.data.items.length} records`);
     
+    // Log all records for debugging
+    data.data.items.forEach((item, index) => {
+      console.log(`Record ${index + 1}:`, item.fields);
+    });
+
     const record = data.data.items.find(item => {
-      console.log(`Comparing email: "${item.fields[API_CONFIG.EMAIL_FIELD]}" with "${email}"`);
-      return item.fields[API_CONFIG.EMAIL_FIELD] === email;
+      const recordEmail = item.fields[API_CONFIG.EMAIL_FIELD];
+      console.log('Comparing:', recordEmail, 'with:', email);
+      // Case-insensitive comparison
+      return recordEmail && recordEmail.toLowerCase() === email.toLowerCase();
     });
 
     if (record) {
