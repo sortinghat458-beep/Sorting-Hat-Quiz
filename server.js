@@ -14,14 +14,14 @@ const PORT = 3000;
 
 // Your Lark API info
 const API_CONFIG = {
-  APP_ID: "cli_a85633f4cbf9d028",
-  APP_SECRET: "DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW",
-  APP_TOKEN: "V1VKbIAasakzuAsD4x0lObgKgQc",
-  TABLE_ID: "tblMhTzRqOPlesg3",
-  VIEW_ID: "vewuuxuOFc",
-  EMAIL_FIELD: "Email",
-  RESULT_FIELD: "Result",
-  BASE_URL: "https://open.larksuite.com/open-apis/bitable/v1"
+  APP_ID: "cli_a85633f4cbf9d028",      // App ID from Lark
+  APP_SECRET: "DKHPXJ6uzdZncrIbiZYJsgijw8PKE2JW",  // App Secret from Lark
+  APP_TOKEN: "V1VKbIAasakzuAsD4x0lObgKgQc",    // Base/App Token
+  TABLE_ID: "tblMhTzRqOPlesg3",        // Table ID from Lark Base
+  VIEW_ID: "vewuuxuOFc",               // View ID from Lark Base
+  EMAIL_FIELD: "Email",                 // Exact column name for email
+  RESULT_FIELD: "Result",               // Exact column name for result
+  BASE_URL: "https://hsglgzblfc5f.sg.larksuite.com/open-apis/bitable/v1"  // Updated Base URL
 };
 
 // Get access token
@@ -112,9 +112,14 @@ app.get("/api/result", async (req, res) => {
     const token = await getTenantAccessToken();
     console.log('✓ Access token obtained successfully');
 
-    const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records?view_id=${API_CONFIG.VIEW_ID}`;
+    const url = `${API_CONFIG.BASE_URL}/apps/${API_CONFIG.APP_TOKEN}/tables/${API_CONFIG.TABLE_ID}/records`;
+    const params = new URLSearchParams({
+      view_id: API_CONFIG.VIEW_ID,
+      filter: `CurrentValue.[${API_CONFIG.EMAIL_FIELD}] = "${email}"`
+    });
+    const fullUrl = `${url}?${params}`;
     console.log(`✓ Requesting data from Lark Base...`);
-    console.log('URL:', url);
+    console.log('URL:', fullUrl);
 
     const response = await fetch(url, {
       headers: { 
