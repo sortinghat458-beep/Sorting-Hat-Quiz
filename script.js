@@ -125,24 +125,13 @@ async function init() {
     const loadingElement = document.getElementById('loading');
     
     if (!email) {
-        errorElement.innerHTML = `
-            <div class="welcome-message">
-                <h2>Welcome to the Sorting Hat Quiz!</h2>
-                <p>To discover your HR house, please:</p>
-                <ol>
-                    <li>Complete the quiz form first</li>
-                    <li>Your results will appear here automatically after submission</li>
-                </ol>
-                <p><a href="https://hsglgzblfc5f.sg.larksuite.com/base/V1VKbIAasakzuAsD4x0lObgKgQc?table=tblMhTzRqOPlesg3&view=vewuuxuOFc" 
-                      style="color: #740001; text-decoration: underline; font-weight: bold;">
-                      Click here to take the quiz!</a></p>
-            </div>`;
+        errorElement.textContent = "No email provided.";
         errorElement.classList.remove('hidden');
         loadingElement.classList.add('hidden');
         return;
     }
 
-    errorElement.textContent = `🎩 The Sorting Hat is considering your answers...`;
+    errorElement.textContent = `Loading...`;
     errorElement.classList.remove('hidden');
 
     try {
@@ -151,28 +140,10 @@ async function init() {
             showResult(house);
             setupShareButton(house);
         } else {
-            errorElement.innerHTML = `
-                <div class="result-pending">
-                    <h2>Your Result Is Being Processed</h2>
-                    <p>The Sorting Hat is still contemplating your answers. This usually takes just a moment.</p>
-                    <p>Please try again in a few seconds by refreshing this page.</p>
-                    <p>If you haven't taken the quiz yet, 
-                        <a href="https://hsglgzblfc5f.sg.larksuite.com/base/V1VKbIAasakzuAsD4x0lObgKgQc?table=tblMhTzRqOPlesg3&view=vewuuxuOFc" 
-                           style="color: #740001; text-decoration: underline; font-weight: bold;">
-                           click here to take it now!</a>
-                    </p>
-                </div>`;
+            errorElement.textContent = `No results found for ${email}`;
         }
     } catch (error) {
-        errorElement.innerHTML = `
-            <div class="error-message">
-                <h2>Oops! Something went wrong</h2>
-                <p>The Sorting Hat encountered an unexpected situation.</p>
-                <p>Please try refreshing the page or take the quiz again.</p>
-                <p><a href="https://hsglgzblfc5f.sg.larksuite.com/base/V1VKbIAasakzuAsD4x0lObgKgQc?table=tblMhTzRqOPlesg3&view=vewuuxuOFc" 
-                      style="color: #740001; text-decoration: underline; font-weight: bold;">
-                      Click here to take the quiz!</a></p>
-            </div>`;
+        errorElement.textContent = `Error: Unable to retrieve data`;
         console.error('Error:', error);
     }
 }
