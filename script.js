@@ -40,16 +40,20 @@ function getEmailFromUrl() {
 
 // No longer need the getTenantAccessToken function as we're using our local backend
 
+// Helper function for logging debug messages
+function appendLog(message) {
+    const errorElement = document.getElementById('error');
+    if (errorElement) {
+        errorElement.innerHTML += `<p style="color: #666; font-size: 0.9em;">${message}</p>`;
+    }
+}
+
 // Fetch result from local backend API
 async function fetchResult(email) {
     const errorElement = document.getElementById('error');
     try {
         errorElement.innerHTML = '<p style="color: #666; font-size: 0.9em;">DEBUG INFO:</p>';
         errorElement.classList.remove('hidden');
-        
-        const appendLog = (message) => {
-            errorElement.innerHTML += `<p style="color: #666; font-size: 0.9em;">${message}</p>`;
-        };
 
         const url = `${API_CONFIG.BASE_URL}/api/result?email=${encodeURIComponent(email)}`;
         appendLog(`Fetching results for email: ${email}`);
@@ -117,17 +121,28 @@ function setupShareButton(house) {
 // Initialize the page
 async function init() {
     const email = getEmailFromUrl();
+    const errorElement = document.getElementById('error');
     
     if (!email) {
-        showResult(null);
+        errorElement.textContent = "No email provided in URL. Add ?email=your.email@example.com to the URL.";
+        errorElement.classList.remove('hidden');
         return;
     }
 
-    const house = await fetchResult(email);
-    showResult(house);
-    
-    if (house) {
-        setupShareButton(house);
+    errorElement.textContent = `Searching for results for: ${email}`;
+    errorElement.classList.remove('hidden');
+
+    try {
+        const house = await fetchResult(email);
+        if (house) {
+            showResult(house);
+            setupShareButton(house);
+        } else {
+            errorElement.innerHTML = `No results found for ${email}.<br>Please make sure:<br>1. You've completed the quiz<br>2. You're using the exact email from the quiz<br>3. The results have been processed`;
+        }
+    } catch (error) {
+        errorElement.textContent = `Error: ${error.message}`;
+        console.error('Error:', error);
     }
 }
 
