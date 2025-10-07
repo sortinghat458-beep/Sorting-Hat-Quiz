@@ -1,13 +1,17 @@
 :root {
-    /* House Colors */
+    /* House Colors - Updated with authentic Harry Potter colors */
     --gryffin-primary: #740001;
-    --gryffin-secondary: #D3A625;
+    --gryffin-secondary: #FDB827;
     --slyther-primary: #1A472A;
-    --slyther-secondary: #AAAAAA;
-    --raven-primary: #0E1A40;
+    --slyther-secondary: #2A623D;
+    --raven-primary: #222F5B;
     --raven-secondary: #946B2D;
-    --huffle-primary: #372E29;
-    --huffle-secondary: #FFD800;
+    --huffle-primary: #FDB827;
+    --huffle-secondary: #000000;
+    /* Theme Colors */
+    --hogwarts-primary: #2A2D34;
+    --hogwarts-accent: #C0B283;
+    --parchment: #F5E6CA;
 }
 
 * {
@@ -17,9 +21,11 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: 'Times New Roman', serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a0f2e, #432c67, #f21010);
+    background: linear-gradient(135deg, var(--hogwarts-primary), #2C3E50, var(--hogwarts-accent));
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -31,14 +37,16 @@ body {
 }
 
 .result-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--parchment);
     border-radius: 20px;
     padding: 2.5rem;
     max-width: 625px;
     margin: 0 auto;
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3),
+                inset 0 0 30px rgba(139, 69, 19, 0.2);
     text-align: center;
     animation: fadeIn 1s ease-in;
+    border: 2px solid var(--hogwarts-accent);
 }
 
 .hidden {
@@ -70,18 +78,23 @@ body {
 }
 
 .share-button {
-    background: #3498db;
-    color: white;
-    border: none;
+    background: var(--hogwarts-primary);
+    color: var(--hogwarts-accent);
+    border: 2px solid var(--hogwarts-accent);
     padding: 15px 30px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 1.25rem;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .share-button:hover {
-    background: #2980b9;
+    background: var(--hogwarts-accent);
+    color: var(--hogwarts-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .error {
@@ -131,4 +144,10 @@ body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
